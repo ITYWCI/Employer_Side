@@ -1,0 +1,166 @@
+@font-face {
+    font-family: montserratBold;
+    src: url('fonts/Montserrat-Bold.ttf');
+  }
+@font-face {
+    font-family: montserratSemiBold;
+    src: url('fonts/Montserrat-SemiBold.ttf');
+  }
+@font-face {
+    font-family: montserratRegular;
+    src: url('fonts/Montserrat-Regular.ttf');
+  }
+@font-face {
+    font-family: montserratExtraBold;
+    src: url('fonts/Montserrat-ExtraBold.ttf');
+  }
+  
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}   
+
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.profile-container {
+    max-width: 800px;
+    padding: 20px 40px;
+    margin-left: auto; /* Space for sidebar */
+    margin-right: auto;
+}
+
+/* Profile Section */
+.profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.profile-image {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 20px;
+}
+
+.profile-image .initials-circle {
+    width: 100%;
+    height: 100%;
+    font-size: 48px;
+}
+
+.profile-image .initials {
+    font-size: 48px;
+}
+
+.profile-name {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    color: #333;
+    font-family: montserratBold;
+}
+
+.profile-subtitle {
+    font-size: 0.875rem;
+    color: #666;
+    font-family: montserratRegular;
+}
+
+#profile-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.section-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #eee;
+    font-family: montserratSemiBold;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-family: montserratSemiBold;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #333;
+    font-family: montserratRegular;
+}
+
+.form-input:disabled{
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: #333;
+    pointer-events: none;
+    font-family: montserratRegular;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.save-button {
+    width: 100%;
+    background-color: #002868;
+    color: white;
+    padding: 0.625rem;
+    border: none;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.save-button:hover {
+    background-color: #001f4d;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .profile-container {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
+    body {
+        background-color: white;
+    }
+
+    .form-input {
+        background-color: #f8f9fa;
+    }
+
+    #profile-form {
+        max-width: 100%;
+    }
+}
