@@ -378,8 +378,12 @@
             </div>
             <div class="container">
               <!--Shows "no jobs found"-->
-              <div id="noResultsMessage" class="noResults"> No jobs found </div>
-            </div>
+              <div style="text-align: center; padding: 40px 20px; margin: 20px auto; max-width: 500px;" id="noResultsMessage">
+                <img src="images/noResults.svg" alt="No results found" style="max-width: 300px; height: auto; margin-bottom: 20px;">
+                <h2 style="font-family: montserratBold; font-size: 24px; margin-bottom: 10px;">We searched everywhere</h2>
+                <p style="font-family: montserratRegular; font-size: 16px; margin-bottom: 20px;">But we couldn't find any jobs that match your current filter criteria.</p>
+                <button id="clearFiltersBtn" style="font-family: montserratSemiBold; padding: 10px 20px; background-color: #f5f5f5; border: none; border-radius: 4px; cursor: pointer;">Clear filters</button>
+            </div></div>
           </div>
           <!--Contents of the card will be filled by the firebase-->
           <!-- /.container-fluid -->

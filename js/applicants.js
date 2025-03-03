@@ -42,9 +42,71 @@
 
         async function initializeApplicants() {
             try {
+                console.log("Initializing applicants...");
+                
                 // Wait for data to load
                 await populateUserNav();
+                console.log("User nav populated");
+                
+                // Make sure DOM is fully loaded
+                if (document.readyState === 'loading') {
+                    console.log("Document still loading, waiting...");
+                    await new Promise(resolve => {
+                        document.addEventListener('DOMContentLoaded', resolve);
+                    });
+                }
+                console.log("Document ready");
+                
+                // Create filter elements if they don't exist
+                createFilterElements();
+                
+                // Then fetch and render users (which will also populate filters)
                 await fetchAndRenderUsers();
+                
+                // Add event listeners to filter elements
+                const nameSearch = document.getElementById('nameSearch');
+                const jobFilter = document.getElementById('jobFilter');
+                const statusFilter = document.getElementById('statusFilter');
+                const dateFromFilter = document.getElementById('dateFromFilter');
+                const dateToFilter = document.getElementById('dateToFilter');
+                const resetFilters = document.getElementById('resetFilters');
+                
+                if (nameSearch) {
+                    nameSearch.addEventListener('input', function() {
+                        if (this.value.length >= 2 || this.value.length === 0) {
+                            applyFilters();
+                        }
+                    });
+                }
+                
+                if (jobFilter) jobFilter.addEventListener('change', applyFilters);
+                if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+                if (dateFromFilter) dateFromFilter.addEventListener('change', applyFilters);
+                if (dateToFilter) dateToFilter.addEventListener('change', applyFilters);
+                
+                if (resetFilters) {
+                    resetFilters.addEventListener('click', function() {
+                        if (nameSearch) nameSearch.value = '';
+                        if (jobFilter) jobFilter.value = 'all';
+                        if (statusFilter) statusFilter.value = 'all';
+                        if (dateFromFilter) dateFromFilter.value = '';
+                        if (dateToFilter) dateToFilter.value = '';
+                        applyFilters();
+                    });
+                }
+                
+                // Add event listener for clear filters button in no results message
+                document.addEventListener('click', function(e) {
+                    if (e.target && e.target.id === 'clearFiltersBtn') {
+                        if (nameSearch) nameSearch.value = '';
+                        if (jobFilter) jobFilter.value = 'all';
+                        if (statusFilter) statusFilter.value = 'all';
+                        if (dateFromFilter) dateFromFilter.value = '';
+                        if (dateToFilter) dateToFilter.value = '';
+                        applyFilters();
+                    }
+                });
+                
                 // Hide loader after everything is loaded
                 hideLoader();
             } catch (error) {
@@ -53,16 +115,6 @@
             }
         }
 
-    // Initialize when DOM is ready (remove duplicate listeners)
-    document.addEventListener('DOMContentLoaded', () => {
-        initializePage(initializeApplicants);
-    });
-
-    // Initialize when DOM is ready
-    document.addEventListener('DOMContentLoaded', () => {
-        initializePage(initializeApplicants);
-    });
-
     document.addEventListener('DOMContentLoaded', () => {
         // Save current URL if not on login page
         if (!window.location.pathname.includes('login.html')) {
@@ -70,7 +122,9 @@
         }
         
         initializePage(initializeApplicants);
+
     });
+
 
 
     // Function to create a user row
@@ -95,6 +149,9 @@
             user.middleName || '',
             user.lastName || ''
         );
+    
+        // Debug: Log the email being set in the data attribute
+        console.log("Setting data-email attribute for", fullName, "to:", user.email);
     
         return `
             <tr>
@@ -139,46 +196,192 @@
     const interviewSection = document.getElementById('interviewSection');
     const submitButton = document.getElementById('submitAction');
 
-    // Function to fetch and populate users from Firestore
-    async function fetchAndRenderUsers() {
-        try {
-            const applicationsRef = collection(db, "applications");
-            const querySnapshot = await getDocs(applicationsRef);
-            const users = [];
+// Function to create filter elements if they don't exist
+function createFilterElements() {
+    // This function can be empty if your HTML already has the filter elements
+    console.log("Filter elements already exist in HTML");
+}
 
-            querySnapshot.forEach((doc) => {
-                const userData = doc.data();
-                users.push({
-                    firstName: userData.firstName,
-                    lastName: userData.lastName,
-                    email: userData.email,
-                    jobTitle: userData.jobTitle,
-                    applicationDate: userData.applicationDate,
-                    status: userData.status || 'application received',
-                    phone: userData.phone,
-                    company: userData.company,
-                    resumeFileName: userData.resumeFileName
-                });
+// Function to fetch and render users from Firestore
+async function fetchAndRenderUsers() {
+    try {
+        const applicationsRef = collection(db, "applications");
+        const querySnapshot = await getDocs(applicationsRef);
+        const users = [];
+        
+        // Collect unique job titles and statuses for filters
+        const jobTitles = new Set();
+        const statuses = new Set();
+
+        querySnapshot.forEach((doc) => {
+            const userData = doc.data();
+            const status = userData.status || 'application received';
+            
+            users.push({
+                firstName: userData.firstName || '',
+                middleName: userData.middleName || '',
+                lastName: userData.lastName || '',
+                email: userData.email || '',
+                jobTitle: userData.jobTitle || '',
+                applicationDate: userData.applicationDate,
+                status: status,
+                phone: userData.phone || '',
+                company: userData.company || '',
+                resumeFileName: userData.resumeFileName || ''
             });
+            
+            // Add to filter sets
+            if (userData.jobTitle) jobTitles.add(userData.jobTitle);
+            statuses.add(status);
+        });
 
-            // Sort users by applicationDate in descending order
-            users.sort((a, b) => {
-                const dateA = a.applicationDate?.toDate?.() || new Date(a.applicationDate);
-                const dateB = b.applicationDate?.toDate?.() || new Date(b.applicationDate);
-                return dateB - dateA; // For descending order (newest first)
-            });
+        // Sort users by applicationDate in descending order
+        users.sort((a, b) => {
+            const dateA = a.applicationDate?.toDate?.() || new Date(a.applicationDate);
+            const dateB = b.applicationDate?.toDate?.() || new Date(b.applicationDate);
+            return dateB - dateA; // For descending order (newest first)
+        });
 
-            const tableBody = document.getElementById('userTableBody');
-            if (tableBody) {
-                tableBody.innerHTML = users.map(user => createUserRow(user)).join('');
-                addViewButtonListeners(); // Add listeners after populating table
+        // Store users in a global variable for filtering
+        window.allUsers = users;
+        
+        // Populate filter dropdowns
+        populateFilterDropdowns(jobTitles, statuses);
+        
+        // Render users with current filters
+        renderFilteredUsers();
+
+    } catch (error) {
+        console.error("Error fetching users:", error);
+    }
+}
+
+// Function to populate filter dropdowns
+function populateFilterDropdowns(jobTitles, statuses) {
+    const jobFilter = document.getElementById('jobFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    
+    if (!jobFilter || !statusFilter) {
+        console.error("Filter elements not found");
+        return;
+    }
+    
+    // Save current selections
+    const currentJobValue = jobFilter.value;
+    const currentStatusValue = statusFilter.value;
+    
+    // Clear existing options except the first one (All)
+    while (jobFilter.options.length > 1) {
+        jobFilter.remove(1);
+    }
+    
+    while (statusFilter.options.length > 1) {
+        statusFilter.remove(1);
+    }
+    
+    // Add job title options
+    jobTitles.forEach(title => {
+        const option = document.createElement('option');
+        option.value = title;
+        option.textContent = title;
+        jobFilter.appendChild(option);
+    });
+    
+    // Add status options
+    statuses.forEach(status => {
+        const option = document.createElement('option');
+        option.value = status;
+        option.textContent = status;
+        statusFilter.appendChild(option);
+    });
+    
+    // Restore previous selections if they exist in the new options
+    if (currentJobValue !== 'all') {
+        for (let i = 0; i < jobFilter.options.length; i++) {
+            if (jobFilter.options[i].value === currentJobValue) {
+                jobFilter.selectedIndex = i;
+                break;
             }
-
-        } catch (error) {
-            console.error("Error fetching users:", error);
         }
     }
-    //End of Fetch and Render Users
+    
+    if (currentStatusValue !== 'all') {
+        for (let i = 0; i < statusFilter.options.length; i++) {
+            if (statusFilter.options[i].value === currentStatusValue) {
+                statusFilter.selectedIndex = i;
+                break;
+            }
+        }
+    }
+}
+
+// Function to render filtered users
+function renderFilteredUsers() {
+    if (!window.allUsers) return;
+    
+    const nameFilter = document.getElementById('nameSearch')?.value.toLowerCase() || '';
+    const jobFilter = document.getElementById('jobFilter')?.value || 'all';
+    const statusFilter = document.getElementById('statusFilter')?.value || 'all';
+    const dateFromFilter = document.getElementById('dateFromFilter')?.value ? new Date(document.getElementById('dateFromFilter').value) : null;
+    const dateToFilter = document.getElementById('dateToFilter')?.value ? new Date(document.getElementById('dateToFilter').value) : null;
+    
+    if (dateToFilter) {
+        dateToFilter.setHours(23, 59, 59); // End of the day
+    }
+    
+    // Filter users based on criteria
+    const filteredUsers = window.allUsers.filter(user => {
+        // Name filter
+        const fullName = `${user.firstName} ${user.middleName} ${user.lastName}`.toLowerCase();
+        const matchesName = !nameFilter || fullName.includes(nameFilter);
+        
+        // Job filter
+        const matchesJob = jobFilter === 'all' || user.jobTitle === jobFilter;
+        
+        // Status filter
+        const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+        
+        // Date filters
+        const userDate = user.applicationDate?.toDate?.() || new Date(user.applicationDate);
+        const matchesDateFrom = !dateFromFilter || userDate >= dateFromFilter;
+        const matchesDateTo = !dateToFilter || userDate <= dateToFilter;
+        
+        return matchesName && matchesJob && matchesStatus && matchesDateFrom && matchesDateTo;
+    });
+    
+    // Render filtered users
+    const tableBody = document.getElementById('userTableBody');
+    const table = document.querySelector('.users-list table');
+    const headerRow = document.querySelector('.users-list table thead tr');
+    const noResultsMessage = document.getElementById('noResultsMessage') || createNoResultsMessage();
+    
+    if (tableBody) {
+        tableBody.innerHTML = filteredUsers.map(user => createUserRow(user)).join('');
+        addViewButtonListeners(); // Add listeners after populating table
+    }
+    
+    // Show/hide no results message and table header
+    if (filteredUsers.length === 0) {
+        if (tableBody) tableBody.style.display = 'none';
+        if (headerRow) headerRow.style.display = 'none';
+        if (table) table.style.border = 'none'; // Remove table border if any
+        
+        noResultsMessage.style.display = 'block';
+    } else {
+        if (tableBody) tableBody.style.display = '';
+        if (headerRow) headerRow.style.display = '';
+        if (table) table.style.border = ''; // Restore table border
+        
+        noResultsMessage.style.display = 'none';
+    }
+    
+    console.log(`Filtered users: ${filteredUsers.length} of ${window.allUsers.length}`);
+}
+
+// Function to apply filters (wrapper for renderFilteredUsers)
+function applyFilters() {
+    renderFilteredUsers();
+}
 
     // Function to add view button listeners
     function addViewButtonListeners() {
@@ -188,6 +391,9 @@
                 e.preventDefault();
                 const email = this.getAttribute('data-email');
                 
+                // Debug: Log the email we're trying to find
+                console.log("Looking for user with email:", email);
+                
                 try {
                     const applicationsRef = collection(db, "applications");
                     const q = query(applicationsRef, where("email", "==", email));
@@ -195,10 +401,14 @@
                     
                     if (!querySnapshot.empty) {
                         const userData = querySnapshot.docs[0].data();
-
+                        
+                        // Make sure we're getting the correct user data
+                        console.log("Retrieved user data:", userData);
                         
                         // Then open the modal with updated data
                         openUserModal(userData);
+                    } else {
+                        console.error("No user found with email:", email);
                     }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
@@ -207,7 +417,6 @@
         });
     }
     //End of Add View Button Listeners
-
 
     // Function to update application status
     async function updateApplicationStatus(email, newStatus, message) {

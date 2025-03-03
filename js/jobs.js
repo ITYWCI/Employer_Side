@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const minSalary = document.getElementById('minSalary');
     const maxSalary = document.getElementById('maxSalary');
     const resetButton = document.getElementById('resetFilters');
+    const resetFilterButton = document.getElementById('clearFiltersBtn');
 
     // Populate location filter with unique locations (sorted alphabetically)
     const locations = new Set();
@@ -168,6 +169,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Reset filters
     resetButton.addEventListener('click', function() {
+        searchInput.value = '';
+        jobTypeFilter.value = '';
+        locationFilter.value = '';
+        minSalary.value = '';
+        maxSalary.value = '';
+        filterJobs();
+    });
+    resetFilterButton.addEventListener('click', function() {
         searchInput.value = '';
         jobTypeFilter.value = '';
         locationFilter.value = '';
