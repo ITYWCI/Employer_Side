@@ -1,8 +1,10 @@
 [build]
-  # Since your files are already in the root directory, not in a "dist" folder
-  publish = "."
-  # If you don't have a build command, you can remove this line or set it to an empty string
-  command = ""
+  publish = "build"
+  command = "bash build.sh"  # Use "build.bat" for Windows
+
+[build.environment]
+  GIT_LFS_ENABLED = "true"
+  GIT_SUBMODULE_STRATEGY = "recursive"
 
 [[redirects]]
   from = "/"
