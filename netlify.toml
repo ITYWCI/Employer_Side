@@ -1,0 +1,18 @@
+[build]
+  publish = "dist"  # Change this to your actual publish directory if needed
+  command = "npm run build"  # Change this if your build command is different
+
+[dev]
+  command = "npm run start"  # Command to run your development server
+  port = 3000  # Change this if your dev server runs on a different port
+
+[functions]
+  directory = "netlify/functions"  # Directory for Netlify Functions
+
+[build.environment]
+  NODE_VERSION = "14"  # Specify the Node.js version if needed
+
+[[redirects]]
+  from = "/*"
+  to = "/dashboard.html"
+  status = 200
